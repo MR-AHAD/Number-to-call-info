@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>র‍্যান্ডম কল ইনফরমেশন জেনারেটর</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;800&display=swap');
+
+  body {
+    margin: 0; padding: 20px; min-height: 100vh;
+    background: linear-gradient(135deg, #121826, #1f2937);
+    font-family: 'Poppins', sans-serif;
+    color: #e0e6f1;
+    display: flex; flex-direction: column; align-items: center;
+  }
+
+  h1 {
+    font-weight: 800; font-size: 2.8rem; text-align: center;
+    margin-bottom: 30px;
+    background: linear-gradient(90deg, #56ccf2, #2f80ed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 6px #2f80edcc);
+    letter-spacing: 2px;
+  }
+
+  .input-area {
+    max-width: 720px; width: 100%;
+    display: flex; flex-wrap: wrap; gap: 16px;
+    justify-content: center; margin-bottom: 35px;
+  }
+
+  input[type=text], select {
+    flex: 1 1 180px; min-width: 180px;
+    padding: 14px 18px; border-radius: 16px;
+    border: none; font-size: 1.1rem; font-weight: 600;
+    color: #f0f8ff;
+    background: rgba(255 255 255 / 0.12);
+    box-shadow: 0 0 18px rgba(47,128,237,0.25);
+    outline-offset: 2px; outline-color: #2f80ed66;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+  input[type=text]:focus, select:focus {
+    background: rgba(255 255 255 / 0.25);
+    box-shadow: 0 0 28px #56ccf2cc;
+    color: #eaf6ff;
+  }
+
+  button {
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #56ccf2, #2f80ed);
+    padding: 14px 36px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    box-shadow: 0 12px 40px #2f80edcc;
+    transition: all 0.35s ease;
+    user-select: none;
+  }
+  button:hover, button:focus {
+    background: linear-gradient(135deg, #2f80ed, #56ccf2);
+    box-shadow: 0 16px 50px #56ccf2cc;
+    transform: translateY(-4px);
+  }
+
+  .call-list {
+    max-width: 720px; width: 100%; max-height: 520px;
+    overflow-y: auto;
+    background: rgba(255 255 255 / 0.05);
+    border-radius: 28px;
+    padding: 28px 28px 24px;
+    box-shadow: 0 0 48px #2f80ed44;
+    backdrop-filter: blur(22px);
+    user-select: none;
+    scroll-behavior: smooth;
+  }
+
+  .call-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 22px;
+    border-radius: 20px;
+    margin-bottom: 18px;
+    background: rgba(255 255 255 / 0.12);
+    box-shadow: 0 0 20px #2f80ed66;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .call-item:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 14px 44px #56ccf2cc;
+  }
+
+  .call-type {
+    min-width: 100px;
+    text-align: center;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.95rem;
+    box-shadow: 0 0 12px rgba(0,0,0,0.45);
+    user-select: none;
+  }
+  .incoming {
+    background: linear-gradient(135deg, #22c55e, #4ade80);
+    box-shadow: 0 0 14px #22c55e;
+  }
+  .outgoing {
+    background: linear-gradient(135deg, #2563eb, #60a5fa);
+    box-shadow: 0 0 14px #3b82f6;
+  }
+  .missed {
+    background: linear-gradient(135deg, #dc2626, #f87171);
+    box-shadow: 0 0 14px #ef4444;
+  }
+
+  .call-info {
+    flex: 1;
+    margin: 0 24px;
+    font-size: 1.05rem;
+    line-height: 1.35;
+  }
+  .call-info div {
+    margin: 4px 0;
+  }
+
+  .duration {
+    font-family: monospace;
+    font-weight: 700;
+    min-width: 80px;
+    text-align: right;
+    font-size: 1rem;
+    user-select: none;
+    color: #ffd54f;
+    text-shadow: 0 0 10px #ffd54faa;
+  }
+
+  /* Scrollbar */
+  .call-list::-webkit-scrollbar {
+    width: 14px;
+  }
+  .call-list::-webkit-scrollbar-thumb {
+    background: #2f80edcc;
+    border-radius: 12px;
+  }
+  .call-list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* Responsive */
+  @media (max-width: 620px) {
+    .call-item {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .call-info {
+      margin: 12px 0;
+    }
+    .duration {
+      text-align: left;
+      min-width: auto;
+    }
+  }
+
+  /* Loading spinner */
+  .loading-spinner {
+    border: 6px solid rgba(255 255 255 / 0.15);
+    border-top: 6px solid #2f80edcc;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    animation: spin 1s linear infinite;
+    margin: 48px auto 0;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+  }
+</style>
+</head>
+<body>
+
+<h1>Number To Call info</h1>
+
+<div class="input-area" role="form" aria-label="কল লিস্ট ফিল্টার অপশন" style="max-width:720px; margin: 0 auto 40px; display:flex; flex-wrap:wrap; gap:16px; justify-content:center;">
+  <input id="phoneInput" type="text" placeholder="০১xxxxxxxxx (১১ ডিজিট)" maxlength="11" aria-required="true" aria-describedby="phoneHelp" style="flex:1 1 180px; min-width:180px; padding:14px 18px; border-radius:16px; border:none; font-size:1.1rem; font-weight:600; color:#f0f8ff; background: rgba(255 255 255 / 0.12); box-shadow: 0 0 18px rgba(47,128,237,0.25); outline-offset:2px; outline-color:#2f80ed66;" />
+  <select id="daysSelect" aria-label="কল কতদিনের ইনফরমেশন দেখাবেন" style="flex:1 1 120px; min-width:120px; padding:14px 18px; border-radius:16px; border:none; font-size:1.1rem; font-weight:600; color:#f0f8ff; background: rgba(255 255 255 / 0.12); box-shadow: 0 0 18px rgba(47,128,237,0.25); outline-offset:2px; outline-color:#2f80ed66;">
+    <option value="7">৭ দিন</option>
+    <option value="15" selected>১৫ দিন</option>
+    <option value="30">৩০ দিন</option>
+    <option value="60">৬০ দিন</option>
+    <option value="90">৯০ দিন</option>
+  </select>
+  <select id="callTypeSelect" aria-label="কল টাইপ ফিল্টার" style="flex:1 1 160px; min-width:160px; padding:14px 18px; border-radius:16px; border:none; font-size:1.1rem; font-weight:600; color:#f0f8ff; background: rgba(255 255 255 / 0.12); box-shadow: 0 0 18px rgba(47,128,237,0.25); outline-offset:2px; outline-color:#2f80ed66;">
+    <option value="all">সব ধরনের কল</option>
+    <option value="incoming">ইনকামিং কল</option>
+    <option value="outgoing">আউটগোয়িং কল</option>
+    <option value="missed">মিসড কল</option>
+  </select>
+  <button id="generateBtn" aria-label="কল লিস্ট জেনারেট করুন" style="flex-shrink: 0; background: linear-gradient(135deg, #56ccf2, #2f80ed); padding: 14px 36px; font-size: 1.25rem; font-weight: 700; color: #fff; border: none; border-radius: 24px; cursor: pointer; box-shadow: 0 12px 40px #2f80edcc; transition: all 0.35s ease; user-select: none;">Get info</button>
+</div>
+
+<div id="callList" class="call-list" aria-live="polite" aria-relevant="additions" style="max-width: 720px; width: 100%; max-height: 520px; overflow-y: auto; background: rgba(255 255 255 / 0.05); border-radius: 28px; padding: 28px 28px 24px; box-shadow: 0 0 48px #2f80ed44; backdrop-filter: blur(22px); user-select: none; scroll-behavior: smooth;">
+  এখানে কল লিস্ট দেখানো হবে।
+</div>
+
+<script>
+  // অপারেটর চেক
+  function detectOperator(phone) {
+    const prefix = phone.slice(0,3);
+    const operators = {
+      "013": "Airtel",
+      "014": "Banglalink",
+      "015": "Teletalk",
+      "016": "Grameenphone",
+      "017": "Grameenphone",
+      "018": "Robi",
+      "019": "Banglalink"
+    };
+    return operators[prefix] || null;
+  }
+
+  function validatePhone(phone) {
+    const regex = /^01[3-9][0-9]{8}$/;
+    if(!regex.test(phone)) return false;
+    if(!detectOperator(phone)) return false;
+    return true;
+  }
+
+  // র‍্যান্ডম নাম ও ফোন বানানোর হেল্পার
+  const sampleNames = [
+    "আলম", "সোহেল", "রিমা", "নূর", "জীবন", "ফাতেমা", "সুমন", "নাসরিন",
+    "রানা", "কামরুল", "সাব্বির", "তানভীর", "লিজা", "শামিম", "মাহফুজ"
+  ];
+
+  // যেকোনো array থেকে র‍্যান্ডম উপাদান নিয়ে আসবে
+  function randomChoice(arr) {
+    return arr[Math.floor(Math.random()*arr.length)];
+  }
+
+  // র‍্যান্ডম কল টাইপ
+  function randomCallType() {
+    return randomChoice(["incoming", "outgoing", "missed"]);
+  }
+
+  // র‍্যান্ডম কল ডিউরেশন
+  function randomDuration(callType) {
+    if(callType === "missed") return 0;
+    return Math.floor(Math.random()*590)+10; // 10-600 সেকেন্ড
+  }
+
+  // র‍্যান্ডম ডেট
+  function randomDateWithinDays(daysBack) {
+    const now = Date.now();
+    const past = now - (daysBack * 24 * 60 * 60 * 1000);
+    const randomTime = past + Math.random() * (now - past);
+    return new Date(randomTime);
+  }
+
+  // র‍্যান্ডম ফোন নম্বর (বাংলাদেশি)
+  function randomPhone() {
+    const prefixes = ["013","014","015","016","017","018","019"];
+    const prefix = randomChoice(prefixes);
+    const suffix = Math.floor(Math.random()*90000000)+10000000;
+    return prefix + suffix.toString().slice(0,8);
+  }
+
+  // নাম্বারের কিছু অংশ থেকে আলাদা নাম তৈরি করার জন্য
+  function nameFromNumber(phone) {
+    const suffix = phone.slice(-4);
+    const code = parseInt(suffix);
+    const idx = code % sampleNames.length;
+    return sampleNames[idx];
+  }
+
+  function formatDate(date) {
+    const d = date;
+    const day = d.getDate().toString().padStart(2,'0');
+    const month = (d.getMonth()+1).toString().padStart(2,'0');
+    const year = d.getFullYear();
+    const hour = d.getHours().toString().padStart(2,'0');
+    const min = d.getMinutes().toString().padStart(2,'0');
+    const sec = d.getSeconds().toString().padStart(2,'0');
+    return `${day}/${month}/${year} ${hour}:${min}:${sec}`;
+  }
+
+  function formatDuration(sec) {
+    if(sec === 0) return "মিসড কল";
+    const m = Math.floor(sec/60);
+    const s = sec % 60;
+    return m>0 ? `${m}মি ${s}সেক` : `${s}সেক`;
+  }
+
+  // কল লিস্ট জেনারেট করার ফাংশন (প্রতি সার্চে আলাদা আলাদা ডেটা)
+  function generateCallList(phone, days, callTypeFilter) {
+    // কলের সংখ্যা 100-200 র‍্যান্ডম
+    const totalCalls = Math.floor(Math.random()*100) + 100;
+
+    const calls = [];
+
+    for(let i=0; i<totalCalls; i++) {
+      let cType = randomCallType();
+      if(callTypeFilter !== "all" && cType !== callTypeFilter) {
+        continue;
+      }
+      const cDate = randomDateWithinDays(days);
+      const cDur = randomDuration(cType);
+
+      // আলাদা নাম্বার হলে আলাদা নাম হবে
+      const contactName = nameFromNumber(randomPhone());
+      const contactPhone = randomPhone();
+
+      calls.push({
+        date: cDate,
+        type: cType,
+        duration: cDur,
+        contactName,
+        contactPhone
+      });
+    }
+
+    // তারিখ অনুযায়ী সাজানো (নতুন থেকে পুরাতন)
+    calls.sort((a,b) => b.date - a.date);
+    return calls;
+  }
+
+  // এলিমেন্টস
+  const phoneInput = document.getElementById("phoneInput");
+  const daysSelect = document.getElementById("daysSelect");
+  const callTypeSelect = document.getElementById("callTypeSelect");
+  const generateBtn = document.getElementById("generateBtn");
+  const callListDiv = document.getElementById("callList");
+
+  function clearCallList() {
+    callListDiv.innerHTML = "";
+  }
+  function showLoading() {
+    callListDiv.innerHTML = `<div class="loading-spinner" role="status" aria-live="polite" aria-label="লোড হচ্ছে..."></div>`;
+  }
+  function showError(msg) {
+    callListDiv.innerHTML = `<p style="text-align:center; color:#ef4444; font-weight:700; font-size:1.3rem; margin-top:32px;">${msg}</p>`;
+  }
+  function renderCallList(calls) {
+    if(calls.length === 0) {
+      callListDiv.innerHTML = `<p style="text-align:center; font-weight:700; margin-top:40px; color:#a0aec0;">কোন কল পাওয়া যায়নি।</p>`;
+      return;
+    }
+    callListDiv.innerHTML = "";
+    calls.forEach(call => {
+      const div = document.createElement("div");
+      div.className = "call-item";
+
+      const typeDiv = document.createElement("div");
+      typeDiv.className = "call-type " + call.type;
+      typeDiv.textContent = call.type === "incoming" ? "ইনকামিং" : call.type === "outgoing" ? "আউটগোয়িং" : "মিসড";
+      typeDiv.setAttribute("aria-label", `কল ধরন: ${typeDiv.textContent}`);
+
+      const infoDiv = document.createElement("div");
+      infoDiv.className = "call-info";
+      infoDiv.innerHTML =
+        `<div><strong>তারিখ ও সময়:</strong> ${formatDate(call.date)}</div>
+         <div><strong>নাম/নম্বর:</strong> ${call.contactName} (${call.contactPhone})</div>`;
+
+      const durDiv = document.createElement("div");
+      durDiv.className = "duration";
+      durDiv.textContent = formatDuration(call.duration);
+      durDiv.setAttribute("aria-label", `কল সময়কাল: ${durDiv.textContent}`);
+
+      div.appendChild(typeDiv);
+      div.appendChild(infoDiv);
+      div.appendChild(durDiv);
+
+      callListDiv.appendChild(div);
+    });
+  }
+
+  generateBtn.addEventListener("click", () => {
+    const phone = phoneInput.value.trim();
+    const days = parseInt(daysSelect.value, 10);
+    const callTypeFilter = callTypeSelect.value;
+
+    clearCallList();
+
+    if(!validatePhone(phone)) {
+      showError("অনুগ্রহ করে সঠিক ১১ ডিজিটের বাংলাদেশি ফোন নম্বর দিন।");
+      return;
+    }
+
+    showLoading();
+
+    setTimeout(() => {
+      const calls = generateCallList(phone, days, callTypeFilter);
+      renderCallList(calls);
+    }, 1200);
+  });
+</script>
+
+</body>
+</html>
